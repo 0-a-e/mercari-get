@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 import csv
+import slackweb
 import firebase_admin
 from firebase_admin import credentials,db
 import os
@@ -86,11 +87,16 @@ def get_item(driver):
             print('<img src="' + img + '"></img>',file=f)
             print(price,file=f)
             print('</div>',file=f)
+            print("count: " + str(count))
+            print("db: " + dbres[count]["title"])
+            print("RT: " + title)
             if dbres[count]["title"] == title:
                 print("match")
             else:
-                print(dbres[count]["title"])
-                print(title)
+            #    print(dbres[count]["title"])
+            #    print(title)
+                slack = slackweb.Slack(url="https://hooks.slack.com/services/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")
+                slack.notify(text="新しい商品が追加されました 名前: " + title + "　金額:　" + price + "　リンク　" + link)
                 print("dont match")
             f.close()
             with open('main.csv', 'a') as f:
@@ -116,4 +122,3 @@ def get_item(driver):
 
 if __name__ == '__main__':
     main()
-    print(CSVDIFF())
