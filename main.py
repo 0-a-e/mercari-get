@@ -8,18 +8,9 @@ from firebase_admin import credentials,db
 import os
 import pandas as pd
 import difflib as diff
+count2 = 0
 count = 0
-'''
-    def make_lines_set(txt):
-        f = open(txt)
-        lines = f.readlines()
-        sets = set(lines)
-        f.close()
-        return sets
-    results = bigs.difference(smalls)
-    for result in results:
-        print(result)
-'''
+#firebase setting
 cred = credentials.Certificate("mercari-price-firebase-adminsdk-hi90f-b7e0d246d7.json")
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://mercari-price.firebaseio.com/',
@@ -29,6 +20,7 @@ firebase_admin.initialize_app(cred, {
     })
 users_ref = db.reference('/data')
 dbres = users_ref.get()
+#end firebase setting
 with open('./index.html', 'w') as f:
     print('<head><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"><script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script><script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script></head><div class="container"><div class="row">',file=f)
     f.close()
@@ -81,23 +73,41 @@ def get_item(driver):
             link = item.find_element_by_tag_name('a').get_attribute('href')
             price = item.find_element_by_class_name('items-box-price').text
             img = item.find_element_by_tag_name('img').get_attribute('data-src')
+            '''
+            users_ref.child(str(count)).set({
+                'title': title,
+                'price': price,
+                'link': link,
+                'img': img
+                })
+            '''
             print('<div class="col">',file=f)
             print('<a href="' + link + '">LINK</a>',file=f)
             print('<h3>' + title + '</h3>',file=f)
             print('<img src="' + img + '"></img>',file=f)
             print(price,file=f)
             print('</div>',file=f)
-            print("count: " + str(count))
-            print("db: " + dbres[count]["title"])
-            print("RT: " + title)
-            if dbres[count]["title"] == title:
-                print("match")
-            else:
-            #    print(dbres[count]["title"])
-            #    print(title)
-                slack = slackweb.Slack(url="https://hooks.slack.com/services/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")
-                slack.notify(text="新しい商品が追加されました 名前: " + title + "　金額:　" + price + "　リンク　" + link)
-                print("dont match")
+            print("count1: " + str(count))
+            print("db: " + dbres[count]["img"])
+            print("RT: " + link)
+            global count2
+            count2 = 0
+            print("count前" + str(count2))
+            while count2 < 50:
+                count2 += 1
+                if count2 < 50:
+                    print(count2)
+                    resimg = dbres[count2]["img"]
+                    print(resimg)
+                    print(img)
+                    if resimg == img:
+                        print("match")
+                        break
+                if count2 == 50:
+                    slack = slackweb.Slack(url="https://hooks.slack.com/services/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")
+                    slack.notify(text="新しい商品が追加されました 名前: " + title + "　金額:　" + price + "　リンク　" + link)
+                    print("dont match")
+                    break
             f.close()
             with open('main.csv', 'a') as f:
                 writer = csv.writer(f)
